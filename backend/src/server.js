@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-
+const resumeRoutes = require("./routes/resume.routes");
 const app = express();
 
 app.use(cors());
@@ -13,7 +13,7 @@ app.get("/", (req, res) => {
 });
 
 const PORT = 5000;
-
+app.use("/api/resume", resumeRoutes);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
