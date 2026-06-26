@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import api from '../../../services/api';
 import ATSDashboard from '../analysis/ATSDashboard';
+import ResumePreview from './ResumePreview';
 
 const ResumeUpload = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -48,7 +49,6 @@ const ResumeUpload = () => {
     const formData = new FormData();
     formData.append('resume', selectedFile);
 
-    // Simulated progress progression
     const interval = setInterval(() => {
       setLoadingStep((prev) => (prev < 2 ? prev + 1 : prev));
     }, 1500);
@@ -58,7 +58,7 @@ const ResumeUpload = () => {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       clearInterval(interval);
-      setLoadingStep(3); // Mark all done
+      setLoadingStep(3);
       setUploadResult(response.data);
     } catch (err) {
       clearInterval(interval);
@@ -113,12 +113,10 @@ const ResumeUpload = () => {
             <div className="space-y-4">
               <p className="text-center text-purple-300 font-medium animate-pulse">AI is analyzing your resume...</p>
               
-              {/* Animated Progress Bar */}
               <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
                 <div className="bg-purple-500 h-2 rounded-full animate-progress" style={{ width: `${(loadingStep + 1) * 33.3}%` }}></div>
               </div>
 
-              {/* Loading Steps */}
               <div className="space-y-2">
                 {loadingSteps.map((step, index) => (
                   <div key={step} className={`flex items-center gap-2 text-sm ${index <= loadingStep ? 'text-white' : 'text-gray-500'}`}>
@@ -132,7 +130,10 @@ const ResumeUpload = () => {
           {error && <p className="mt-4 text-center text-red-400 font-medium">{error}</p>}
         </div>
       ) : (
-        <ATSDashboard analysisData={uploadResult.atsAnalysis} />
+        <div className="space-y-8">
+          <ResumePreview text={uploadResult.extractedText} />
+          <ATSDashboard analysisData={uploadResult.atsAnalysis} />
+        </div>
       )}
     </div>
   );
