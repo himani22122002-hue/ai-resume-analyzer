@@ -1,8 +1,8 @@
-import React from 'react';
+import ResumeUpload from '../components/features/resume/ResumeUpload';
 
 const HomePage = () => {
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col pt-16"> {/* Added pt-16 for padding */}
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col pt-16">
       {/* Hero Section */}
       <header className="flex-grow flex items-center justify-center p-4">
         <div className="text-center max-w-3xl">
@@ -17,6 +17,11 @@ const HomePage = () => {
           </button>
         </div>
       </header>
+
+      {/* Resume Upload Section */}
+      <section className="py-12 p-4">
+        <ResumeUpload />
+      </section>
 
       {/* Optional: Footer */}
       <footer className="p-4 bg-gray-800 text-gray-400 text-center text-sm">
