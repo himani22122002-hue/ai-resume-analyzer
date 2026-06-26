@@ -1,8 +1,11 @@
 import React, { useState, useRef } from 'react';
+import api from '../../../services/api';
 
 const ResumeUpload = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [uploadResult, setUploadResult] = useState(null);
   const fileInputRef = useRef(null);
 
   const MAX_SIZE_MB = 5;
@@ -14,6 +17,7 @@ const ResumeUpload = () => {
 
     // Reset state
     setError('');
+    setUploadResult(null);
 
     // Validation
     if (file.type !== 'application/pdf') {
@@ -31,6 +35,29 @@ const ResumeUpload = () => {
     setSelectedFile(file);
   };
 
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+
+    setLoading(true);
+    setError('');
+
+    const formData = new FormData();
+    formData.append('resume', selectedFile);
+
+    try {
+      const response = await api.post('/resume/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      setUploadResult(response.data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'An error occurred during upload.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-lg mx-auto p-8 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl">
       <div className="text-center mb-8">
@@ -40,7 +67,7 @@ const ResumeUpload = () => {
 
       <div
         className="border-2 border-dashed border-white/20 rounded-2xl p-10 flex flex-col items-center justify-center hover:border-white/40 transition-colors cursor-pointer"
-        onClick={() => fileInputRef.current.click()}
+        onClick={() => !loading && fileInputRef.current.click()}
       >
         <input
           type="file"
@@ -68,20 +95,42 @@ const ResumeUpload = () => {
         <button
           type="button"
           className="px-6 py-2 bg-white text-gray-900 font-semibold rounded-full hover:bg-gray-200 transition-colors"
+          disabled={loading}
         >
           Browse Resume
         </button>
       </div>
 
       {selectedFile && (
-        <p className="mt-4 text-center text-green-400 font-medium">
-          Selected: {selectedFile.name}
+        <div className="mt-4 text-center">
+          <p className="text-green-400 font-medium mb-4">
+            Selected: {selectedFile.name}
+          </p>
+          <button
+            onClick={handleUpload}
+            disabled={loading}
+            className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-full hover:bg-purple-700 transition-colors disabled:opacity-50"
+          >
+            {loading ? 'Uploading...' : 'Analyze Resume'}
+          </button>
+        </div>
+      )}
+
+      {loading && (
+        <p className="mt-4 text-center text-gray-300 font-medium animate-pulse">
+          Processing...
         </p>
       )}
 
       {error && (
         <p className="mt-4 text-center text-red-400 font-medium">
           {error}
+        </p>
+      )}
+      
+      {uploadResult && (
+        <p className="mt-4 text-center text-green-400 font-medium">
+          Upload successful!
         </p>
       )}
     </div>
