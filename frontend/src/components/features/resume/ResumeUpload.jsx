@@ -1,14 +1,36 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 
-/**
- * ResumeUpload - A professional, modern, and reusable file upload component.
- * Features:
- * - Glassmorphism card styling
- * - Drag and drop area visual
- * - Responsive layout
- * - Purely presentational (no logic or validation included)
- */
 const ResumeUpload = () => {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [error, setError] = useState('');
+  const fileInputRef = useRef(null);
+
+  const MAX_SIZE_MB = 5;
+  const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Reset state
+    setError('');
+
+    // Validation
+    if (file.type !== 'application/pdf') {
+      setError('Invalid file type. Please upload a PDF file.');
+      setSelectedFile(null);
+      return;
+    }
+
+    if (file.size > MAX_SIZE_BYTES) {
+      setError(`File is too large. Maximum size is ${MAX_SIZE_MB} MB.`);
+      setSelectedFile(null);
+      return;
+    }
+
+    setSelectedFile(file);
+  };
+
   return (
     <div className="w-full max-w-lg mx-auto p-8 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl">
       <div className="text-center mb-8">
@@ -16,8 +38,18 @@ const ResumeUpload = () => {
         <p className="text-gray-400">Upload your resume in PDF format (.pdf)</p>
       </div>
 
-      <div className="border-2 border-dashed border-white/20 rounded-2xl p-10 flex flex-col items-center justify-center hover:border-white/40 transition-colors cursor-pointer">
-        {/* Upload Icon */}
+      <div
+        className="border-2 border-dashed border-white/20 rounded-2xl p-10 flex flex-col items-center justify-center hover:border-white/40 transition-colors cursor-pointer"
+        onClick={() => fileInputRef.current.click()}
+      >
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept="application/pdf"
+          className="hidden"
+        />
+
         <svg
           className="w-12 h-12 text-purple-400 mb-4"
           fill="none"
@@ -33,7 +65,6 @@ const ResumeUpload = () => {
           />
         </svg>
 
-        {/* Browse Resume Button - Decorative/Non-functional */}
         <button
           type="button"
           className="px-6 py-2 bg-white text-gray-900 font-semibold rounded-full hover:bg-gray-200 transition-colors"
@@ -41,6 +72,18 @@ const ResumeUpload = () => {
           Browse Resume
         </button>
       </div>
+
+      {selectedFile && (
+        <p className="mt-4 text-center text-green-400 font-medium">
+          Selected: {selectedFile.name}
+        </p>
+      )}
+
+      {error && (
+        <p className="mt-4 text-center text-red-400 font-medium">
+          {error}
+        </p>
+      )}
     </div>
   );
 };
