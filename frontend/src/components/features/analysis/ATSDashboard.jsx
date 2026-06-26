@@ -9,7 +9,13 @@ const DashboardCard = ({ title, children, gradient }) => (
   </div>
 );
 
-const ATSDashboard = () => {
+const ATSDashboard = ({ analysisData }) => {
+  if (!analysisData) {
+    return <div className="text-center text-gray-400 p-8">No analysis data available.</div>;
+  }
+
+  const { score, missingSkills, missingKeywords, suggestions } = analysisData;
+
   return (
     <div className="w-full max-w-6xl mx-auto p-4 md:p-8">
       <h2 className="text-3xl font-bold text-white mb-8 text-center">Resume Analysis Results</h2>
@@ -17,30 +23,38 @@ const ATSDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <DashboardCard title="ATS Score" gradient="hover:shadow-purple-500/10">
           <div className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-            85%
+            {score !== undefined ? `${score}%` : 'N/A'}
           </div>
         </DashboardCard>
 
         <DashboardCard title="Missing Skills" gradient="hover:shadow-blue-500/10">
-          <ul className="text-sm text-gray-400 space-y-2">
-            <li>• React Testing Library</li>
-            <li>• CI/CD Pipelines</li>
-            <li>• Cloud Infrastructure</li>
-          </ul>
+          {missingSkills && missingSkills.length > 0 ? (
+            <ul className="text-sm text-gray-400 space-y-2">
+              {missingSkills.map((skill, index) => <li key={index}>• {skill}</li>)}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500 italic">No missing skills identified.</p>
+          )}
         </DashboardCard>
 
         <DashboardCard title="Missing Keywords" gradient="hover:shadow-green-500/10">
-          <ul className="text-sm text-gray-400 space-y-2">
-            <li>• Agile Methodologies</li>
-            <li>• RESTful API</li>
-            <li>• Microservices</li>
-          </ul>
+          {missingKeywords && missingKeywords.length > 0 ? (
+            <ul className="text-sm text-gray-400 space-y-2">
+              {missingKeywords.map((keyword, index) => <li key={index}>• {keyword}</li>)}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500 italic">No missing keywords identified.</p>
+          )}
         </DashboardCard>
 
         <DashboardCard title="AI Suggestions" gradient="hover:shadow-orange-500/10">
-          <p className="text-sm text-gray-400 leading-relaxed">
-            Highlight your experience with scalable architecture to better align with senior roles.
-          </p>
+          {suggestions && suggestions.length > 0 ? (
+            <ul className="text-sm text-gray-400 leading-relaxed space-y-2">
+              {suggestions.map((suggestion, index) => <li key={index}>{suggestion}</li>)}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500 italic">No suggestions at this time.</p>
+          )}
         </DashboardCard>
       </div>
     </div>
