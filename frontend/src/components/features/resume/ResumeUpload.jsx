@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import api from '../../../services/api';
 import ATSDashboard from '../analysis/ATSDashboard';
 import ResumePreview from './ResumePreview';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const ResumeUpload = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -60,12 +62,131 @@ const ResumeUpload = () => {
       clearInterval(interval);
       setLoadingStep(3);
       setUploadResult(response.data);
+      setLoading(false);   
     } catch (err) {
       clearInterval(interval);
       setError(err.response?.data?.message || 'An error occurred during analysis.');
       setLoading(false);
     }
   };
+
+
+  const handleDownload = () => {
+    if (!uploadResult || !uploadResult.atsAnalysis) return;
+
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const { atsScore, missingSkills, missingKeywords, suggestions } = uploadResult.atsAnalysis;
+
+    const pageWidth = doc.internal.pageSize.width;
+
+    const addHeaderFooter = () => {
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        // Header
+        doc.setFillColor(0, 51, 102);
+        const pageHeight = doc.internal.pageSize.height;
+
+doc.rect(0, 0, pageWidth, 22, "F");
+
+doc.setTextColor(255);
+doc.setFontSize(18);
+doc.text("AI Resume Analyzer Report", 18, 14);
+
+doc.setTextColor(120);
+doc.setFontSize(10);
+
+doc.text(
+  `Generated using AI Resume Analyzer | Page ${i} of ${pageCount}`,
+  18,
+  pageHeight - 10
+);
+        
+        // Footer
+        doc.setTextColor(100, 100, 100);
+        doc.setFontSize(10);
+        doc.text(`Generated using AI Resume Analyzer | Page ${i} of ${pageCount}`, 10, 290);
+      }
+    };
+
+    // ATS Score
+    const getScoreColor = (s) => (s >= 80 ? [0, 128, 0] : s >= 60 ? [204, 204, 0] : [255, 0, 0]);
+    doc.setFillColor(...getScoreColor(atsScore));
+    doc.roundedRect(18, 30, 80, 18, 3, 3, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
+    doc.setFontSize(16);
+    doc.text(`ATS Score: ${atsScore}%`, 25, 42);
+
+    // Helper for Tables
+    const createTable = (title, items) => {
+  autoTable(doc, {
+    head: [[title]],
+    body: items.map((item) => [`• ${item}`]),
+
+    startY: doc.lastAutoTable
+      ? doc.lastAutoTable.finalY + 15
+      : 55,
+
+    theme: "grid",
+
+    margin: {
+      top: 25,
+      bottom: 20,
+      left: 18,
+      right: 18,
+    },
+
+    styles: {
+      fontSize: 10,
+      overflow: "linebreak",
+      cellPadding: 4,
+    },
+
+    headStyles: {
+      fillColor: [0, 51, 102],
+      textColor: 255,
+      fontSize: 12,
+    },
+
+    pageBreak: "auto",
+
+    didDrawPage: function () {
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      // Header
+      doc.setFillColor(0, 51, 102);
+      doc.rect(0, 0, pageWidth, 20, "F");
+
+      doc.setTextColor(255);
+      doc.setFontSize(18);
+      doc.text("AI Resume Analyzer Report", 18, 13);
+
+      // Footer
+      doc.setTextColor(120);
+      doc.setFontSize(10);
+
+      const pageNumber = doc.internal.getCurrentPageInfo().pageNumber;
+
+      doc.text(
+        `Generated using AI Resume Analyzer | Page ${pageNumber}`,
+        18,
+        pageHeight - 10
+      );
+    },
+  });
+};
+
+    createTable('Missing Skills', missingSkills);
+    createTable('Missing Keywords', missingKeywords);
+    createTable('AI Suggestions', suggestions);
+
+    addHeaderFooter();
+    doc.save('resume-report.pdf');
+  };
+
+  // ... (rest of the component) ...
 
   return (
     <div className="w-full">
@@ -133,10 +254,17 @@ const ResumeUpload = () => {
         <div className="space-y-8">
           <ResumePreview text={uploadResult.extractedText} />
           <ATSDashboard analysisData={uploadResult.atsAnalysis} />
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={handleDownload}
+              className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-xl shadow-lg transition-all active:scale-95"
+            >
+              Download Report
+            </button>
+          </div>
         </div>
       )}
     </div>
   );
 };
-
 export default ResumeUpload;
