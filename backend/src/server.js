@@ -18,6 +18,7 @@ app.get("/", (req, res) => {
 app.use("/api/resume", resumeRoutes);
 
 const PORT = 5000;
+console.log("API Key Loaded:", process.env.GEMINI_API_KEY ? "YES" : "NO");
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

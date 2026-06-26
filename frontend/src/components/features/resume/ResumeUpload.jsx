@@ -133,7 +133,7 @@ const ResumeUpload = () => {
           )}
         </div>
       ) : (
-        <ATSDashboard analysisData={uploadResult} />
+        <ATSDashboard analysisData={uploadResult.atsAnalysis} />
       )}
     </div>
   );
