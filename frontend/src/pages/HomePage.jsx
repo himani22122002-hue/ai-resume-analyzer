@@ -2,15 +2,7 @@ import React from 'react';
 
 const HomePage = () => {
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
-      {/* Navbar */}
-      <nav className="p-4 bg-gray-800 shadow-lg">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-purple-400">AI Resume Analyzer</h1>
-          {/* Future navigation items could go here */}
-        </div>
-      </nav>
-
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col pt-16"> {/* Added pt-16 for padding */}
       {/* Hero Section */}
       <header className="flex-grow flex items-center justify-center p-4">
         <div className="text-center max-w-3xl">
