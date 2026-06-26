@@ -19,7 +19,7 @@ const HomePage = () => {
       </header>
 
       {/* Resume Upload Section */}
-      <section className="py-12 p-4">
+      <section className="w-full flex justify-center py-16 px-4">
         <ResumeUpload />
       </section>
 
