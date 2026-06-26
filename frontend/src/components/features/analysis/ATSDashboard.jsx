@@ -14,7 +14,7 @@ const ATSDashboard = ({ analysisData }) => {
     return <div className="text-center text-gray-400 p-8">No analysis data available.</div>;
   }
 
-  const { score, missingSkills, missingKeywords, suggestions } = analysisData;
+  const { atsScore, missingSkills, missingKeywords, suggestions } = analysisData;
 
   return (
     <div className="w-full max-w-6xl mx-auto p-4 md:p-8">
@@ -23,7 +23,7 @@ const ATSDashboard = ({ analysisData }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <DashboardCard title="ATS Score" gradient="hover:shadow-purple-500/10">
           <div className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-            {score !== undefined ? `${score}%` : 'N/A'}
+            {atsScore !== undefined ? `${atsScore}%` : 'N/A'}
           </div>
         </DashboardCard>
 
