@@ -3,6 +3,7 @@ const pdfParse = require("pdf-parse");
 
 const { analyzeResume } = require("../services/gemini.service");
 const { saveHistoryItem } = require("../services/history.service");
+const { calculateATSScore } = require("../services/scoring.service");
 
 const uploadResume = async (req, res) => {
   try {
@@ -10,7 +11,14 @@ const uploadResume = async (req, res) => {
 
     const data = await pdfParse(pdfBuffer);
 
+    // Get suggestions from Gemini
     const analysis = await analyzeResume(data.text);
+    
+    // Calculate custom score
+    const customScore = calculateATSScore(data.text);
+    
+    // Override ATS score
+    analysis.atsScore = customScore.atsScore;
 
     await saveHistoryItem(
       req.file.originalname,
