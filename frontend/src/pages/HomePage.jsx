@@ -1,4 +1,5 @@
 import ResumeUpload from '../components/features/resume/ResumeUpload';
+import ResumeHistory from '../components/features/resume/ResumeHistory';
 
 const HomePage = () => {
   return (
@@ -21,6 +22,11 @@ const HomePage = () => {
       {/* Resume Upload Section */}
       <section className="w-full flex justify-center py-16 px-4">
         <ResumeUpload />
+      </section>
+
+      {/* History Section */}
+      <section className="w-full flex justify-center pb-16 px-4">
+        <ResumeHistory />
       </section>
 
       {/* Optional: Footer */}

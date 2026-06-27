@@ -2,6 +2,7 @@ const fs = require("fs");
 const pdfParse = require("pdf-parse");
 
 const { analyzeResume } = require("../services/gemini.service");
+const { saveHistoryItem } = require("../services/history.service");
 
 const uploadResume = async (req, res) => {
   try {
@@ -11,11 +12,15 @@ const uploadResume = async (req, res) => {
 
     const analysis = await analyzeResume(data.text);
 
-    res.json({
-  extractedText: data.text,
-  atsAnalysis: analysis,
-});
+    await saveHistoryItem(
+      req.file.originalname,
+      analysis.atsScore
+    );
 
+    res.json({
+      extractedText: data.text,
+      atsAnalysis: analysis,
+    });
   } catch (error) {
     console.error(error);
 

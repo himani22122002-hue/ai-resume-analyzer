@@ -62,7 +62,17 @@ const ResumeUpload = () => {
       clearInterval(interval);
       setLoadingStep(3);
       setUploadResult(response.data);
-      setLoading(false);   
+      setLoading(false);
+      
+      // Save to history
+      try {
+        await saveHistory(selectedFile.name, response.data.atsAnalysis.atsScore);
+        if (window.refreshResumeHistory) {
+          window.refreshResumeHistory();
+        }
+      } catch (historyErr) {
+        console.error("Failed to save to history:", historyErr);
+      }
     } catch (err) {
       clearInterval(interval);
       setError(err.response?.data?.message || 'An error occurred during analysis.');
