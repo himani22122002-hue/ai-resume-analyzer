@@ -266,7 +266,12 @@ doc.text(
       ) : (
         <div className="space-y-8">
           <ResumePreview text={uploadResult.extractedText} />
-          <ATSDashboard analysisData={uploadResult.atsAnalysis} />
+          <ATSDashboard
+  analysisData={{
+    ...uploadResult.atsAnalysis,
+    jobMatchAnalysis: uploadResult.jobMatchAnalysis,
+  }}
+/>
           <div className="flex justify-center mt-6">
             <button
               onClick={handleDownload}

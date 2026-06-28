@@ -4,32 +4,42 @@ const pdfParse = require("pdf-parse");
 const { analyzeResume } = require("../services/gemini.service");
 const { saveHistoryItem } = require("../services/history.service");
 const { calculateATSScore } = require("../services/scoring.service");
+const { calculateJobMatch } = require("../services/jobMatch.service");
 
 const uploadResume = async (req, res) => {
   try {
     const pdfBuffer = fs.readFileSync(req.file.path);
-    const jobDescription = req.body.jobDescription;
+
+    const jobDescription = req.body.jobDescription || "";
 
     const data = await pdfParse(pdfBuffer);
 
-    // Get suggestions from Gemini
+    // Gemini analysis (suggestions, missing skills, keywords)
     const analysis = await analyzeResume(data.text, jobDescription);
-    
-    // Calculate custom score
+
+    // Deterministic ATS Score
     const customScore = calculateATSScore(data.text);
-    
-    // Override ATS score
     analysis.atsScore = customScore.atsScore;
 
+    // Deterministic Job Match
+    const jobMatchAnalysis = calculateJobMatch(
+      data.text,
+      jobDescription
+    );
+
+    // Save analysis history
     await saveHistoryItem(
       req.file.originalname,
       analysis.atsScore
     );
 
+    // Send everything to frontend
     res.json({
       extractedText: data.text,
       atsAnalysis: analysis,
+      jobMatchAnalysis,
     });
+
   } catch (error) {
     console.error(error);
 
