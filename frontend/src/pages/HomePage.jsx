@@ -1,7 +1,11 @@
+import { useState } from 'react';
 import ResumeUpload from '../components/features/resume/ResumeUpload';
 import ResumeHistory from '../components/features/resume/ResumeHistory';
+import JobDescriptionInput from '../components/features/resume/JobDescriptionInput';
 
 const HomePage = () => {
+  const [jobDescription, setJobDescription] = useState('');
+
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col pt-16">
       {/* Hero Section */}
@@ -21,7 +25,19 @@ const HomePage = () => {
 
       {/* Resume Upload Section */}
       <section className="w-full flex justify-center py-16 px-4">
-        <ResumeUpload />
+        <ResumeUpload
+          jobDescription={jobDescription}
+        />
+      </section>
+
+      {/* Job Description Section */}
+      <section className="w-full flex justify-center pb-16 px-4">
+        <div className="w-full max-w-lg mx-auto p-8 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl">
+          <JobDescriptionInput
+            value={jobDescription}
+            onChange={setJobDescription}
+          />
+        </div>
       </section>
 
       {/* History Section */}

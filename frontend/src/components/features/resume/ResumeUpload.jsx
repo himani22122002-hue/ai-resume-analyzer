@@ -5,7 +5,7 @@ import ResumePreview from './ResumePreview';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-const ResumeUpload = () => {
+const ResumeUpload = ({ jobDescription }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -50,6 +50,9 @@ const ResumeUpload = () => {
 
     const formData = new FormData();
     formData.append('resume', selectedFile);
+    if (jobDescription) {
+      formData.append('jobDescription', jobDescription);
+    }
 
     const interval = setInterval(() => {
       setLoadingStep((prev) => (prev < 2 ? prev + 1 : prev));

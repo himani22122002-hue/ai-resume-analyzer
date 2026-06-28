@@ -4,11 +4,12 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-async function analyzeResume(resumeText) {
+async function analyzeResume(resumeText, jobDescription) {
   const prompt = `
 You are an ATS Resume Analyzer.
 
 Analyze the following resume and return ONLY valid JSON.
+${jobDescription ? `\nCompare the resume against this job description:\n${jobDescription}\n` : ''}
 
 Return in this format:
 

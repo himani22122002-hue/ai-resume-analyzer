@@ -8,11 +8,12 @@ const { calculateATSScore } = require("../services/scoring.service");
 const uploadResume = async (req, res) => {
   try {
     const pdfBuffer = fs.readFileSync(req.file.path);
+    const jobDescription = req.body.jobDescription;
 
     const data = await pdfParse(pdfBuffer);
 
     // Get suggestions from Gemini
-    const analysis = await analyzeResume(data.text);
+    const analysis = await analyzeResume(data.text, jobDescription);
     
     // Calculate custom score
     const customScore = calculateATSScore(data.text);
