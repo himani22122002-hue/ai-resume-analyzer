@@ -53,8 +53,31 @@ const calculateATSScore = (resumeText) => {
   if (/\d+[%]|\d+\s*[+]|\d+\s*million|\d+\s*k/i.test(resumeText)) breakdown.quantifiedAchievements = 10;
 
   // 7. Technical Skills Count
-  const techSkills = ['javascript', 'python', 'java', 'c++', 'react', 'node', 'sql', 'aws', 'docker', 'kubernetes', 'html', 'css', 'typescript', 'git', 'c#', 'angular', 'vue'];
-  const foundSkills = techSkills.filter(skill => new RegExp(`\\b${skill}\\b`, 'i').test(resumeText));
+  const techSkills = [
+  "javascript",
+  "python",
+  "java",
+  "c++",
+  "react",
+  "node",
+  "sql",
+  "aws",
+  "docker",
+  "kubernetes",
+  "html",
+  "css",
+  "typescript",
+  "git",
+  "c#",
+  "angular",
+  "vue"
+];
+
+const lowerResume = resumeText.toLowerCase();
+
+const foundSkills = techSkills.filter(skill =>
+  lowerResume.includes(skill.toLowerCase())
+);
   if (foundSkills.length >= 5) breakdown.technicalSkillsCount = 10;
   else if (foundSkills.length > 0) breakdown.technicalSkillsCount = 5;
 
