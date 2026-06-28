@@ -63,7 +63,7 @@ const Badge = ({ children, type }) => {
 const ATSDashboard = ({ analysisData }) => {
   if (!analysisData) return <div className="text-center text-gray-400 p-8">No analysis data available.</div>;
 
-  const { atsScore, missingSkills, missingKeywords, suggestions, jobMatchAnalysis } = analysisData;
+  const { atsScore, missingSkills, missingKeywords, suggestions, jobMatchAnalysis, optimizer } = analysisData;
 
   return (
     <div className="w-full max-w-6xl mx-auto p-4 md:p-8 space-y-8">
@@ -140,6 +140,49 @@ const ATSDashboard = ({ analysisData }) => {
                 <h4 className="text-sm text-purple-200 font-medium mb-1">Recommendation</h4>
                 <p className="text-sm text-purple-100/80">{jobMatchAnalysis.recommendation}</p>
               </div>
+            </div>
+          </div>
+        </DashboardCard>
+      )}
+
+      {optimizer && (
+        <DashboardCard title="AI Resume Optimizer" icon={<span>✨</span>} gradient="lg:col-span-3">
+          <div className="space-y-6">
+            <div className="p-4 bg-white/10 rounded-xl border border-white/10">
+              <h4 className="text-sm text-gray-300 font-medium mb-2">Professional Summary</h4>
+              <p className="text-sm text-gray-100 leading-relaxed">{optimizer.professionalSummary}</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="text-sm text-gray-300 mb-3 font-medium">Improved Skills</h4>
+                <div className="flex flex-wrap gap-2">
+                  {optimizer.improvedSkills?.map((s, i) => <Badge key={i} type="match">{s}</Badge>)}
+                </div>
+              </div>
+              <div>
+                <h4 className="text-sm text-gray-300 mb-3 font-medium">Overall Advice</h4>
+                <div className="bg-blue-900/20 border border-blue-500/30 p-4 rounded-xl flex gap-3">
+                  <span className="text-xl">💡</span>
+                  <ul className="text-sm text-blue-100/80 space-y-2">
+                    {optimizer.overallAdvice?.map((a, i) => <li key={i}>• {a}</li>)}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm text-gray-300 mb-3 font-medium">Improved Experience</h4>
+              <ul className="text-sm text-gray-300 space-y-2 list-disc pl-5">
+                {optimizer.improvedExperience?.map((e, i) => <li key={i}>{e}</li>)}
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-sm text-gray-300 mb-3 font-medium">Improved Projects</h4>
+              <ul className="text-sm text-gray-300 space-y-2 list-disc pl-5">
+                {optimizer.improvedProjects?.map((p, i) => <li key={i}>{p}</li>)}
+              </ul>
             </div>
           </div>
         </DashboardCard>

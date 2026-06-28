@@ -270,6 +270,7 @@ doc.text(
   analysisData={{
     ...uploadResult.atsAnalysis,
     jobMatchAnalysis: uploadResult.jobMatchAnalysis,
+    optimizer: uploadResult.optimizer,
   }}
 />
           <div className="flex justify-center mt-6">

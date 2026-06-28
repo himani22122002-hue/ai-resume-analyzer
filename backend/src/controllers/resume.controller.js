@@ -5,6 +5,7 @@ const { analyzeResume } = require("../services/gemini.service");
 const { saveHistoryItem } = require("../services/history.service");
 const { calculateATSScore } = require("../services/scoring.service");
 const { calculateJobMatch } = require("../services/jobMatch.service");
+const { optimizeResume } = require("../services/resumeOptimizer.service");
 
 const uploadResume = async (req, res) => {
   try {
@@ -27,6 +28,9 @@ const uploadResume = async (req, res) => {
       jobDescription
     );
 
+    // Call the Resume Optimizer
+    const optimizer = await optimizeResume(data.text, jobDescription);
+
     // Save analysis history
     await saveHistoryItem(
       req.file.originalname,
@@ -38,6 +42,7 @@ const uploadResume = async (req, res) => {
       extractedText: data.text,
       atsAnalysis: analysis,
       jobMatchAnalysis,
+      optimizer,
     });
 
   } catch (error) {
