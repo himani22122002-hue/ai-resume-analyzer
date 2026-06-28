@@ -53,10 +53,17 @@ const DashboardCard = ({ title, icon, children, gradient }) => (
   </div>
 );
 
+const Badge = ({ children, type }) => {
+  const styles = type === 'match' 
+    ? 'bg-green-900/30 text-green-300 border-green-700' 
+    : 'bg-red-900/30 text-red-300 border-red-700';
+  return <span className={`px-2 py-1 rounded-full text-xs font-medium border ${styles}`}>{children}</span>;
+};
+
 const ATSDashboard = ({ analysisData }) => {
   if (!analysisData) return <div className="text-center text-gray-400 p-8">No analysis data available.</div>;
 
-  const { atsScore, missingSkills, missingKeywords, suggestions } = analysisData;
+  const { atsScore, missingSkills, missingKeywords, suggestions, jobMatchAnalysis } = analysisData;
 
   return (
     <div className="w-full max-w-6xl mx-auto p-4 md:p-8 space-y-8">
@@ -80,6 +87,39 @@ const ATSDashboard = ({ analysisData }) => {
           </DashboardCard>
         </div>
       </div>
+
+      {jobMatchAnalysis && (
+        <DashboardCard title="Job Match Analysis" icon={<span>⚖️</span>} gradient="lg:col-span-3">
+          <div className="space-y-4">
+            <div className="flex justify-between items-center text-sm">
+              <span>Match Score</span>
+              <span className="font-bold">{jobMatchAnalysis.matchScore}%</span>
+            </div>
+            <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden">
+              <div 
+                className="bg-purple-500 h-full rounded-full transition-all duration-1000" 
+                style={{ width: `${jobMatchAnalysis.matchScore}%` }}
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h4 className="text-sm text-gray-400 mb-2">Skills</h4>
+                <div className="flex flex-wrap gap-2">
+                  {jobMatchAnalysis.matchedSkills?.map(s => <Badge key={s} type="match">{s}</Badge>)}
+                  {jobMatchAnalysis.missingSkills?.map(s => <Badge key={s} type="miss">{s}</Badge>)}
+                </div>
+              </div>
+              <div>
+                <h4 className="text-sm text-gray-400 mb-2">Keywords</h4>
+                <div className="flex flex-wrap gap-2">
+                  {jobMatchAnalysis.matchedKeywords?.map(k => <Badge key={k} type="match">{k}</Badge>)}
+                  {jobMatchAnalysis.missingKeywords?.map(k => <Badge key={k} type="miss">{k}</Badge>)}
+                </div>
+              </div>
+            </div>
+          </div>
+        </DashboardCard>
+      )}
 
       <DashboardCard title="AI Suggestions" icon={<span>💡</span>} gradient="lg:col-span-3">
         <ul className="text-sm text-gray-400 leading-relaxed space-y-3 h-48 overflow-y-auto pr-4">
