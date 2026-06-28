@@ -90,7 +90,7 @@ const ATSDashboard = ({ analysisData }) => {
 
       {jobMatchAnalysis && (
         <DashboardCard title="Job Match Analysis" icon={<span>⚖️</span>} gradient="lg:col-span-3">
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="flex justify-between items-center text-sm">
               <span>Match Score</span>
               <span className="font-bold">{jobMatchAnalysis.matchScore}%</span>
@@ -101,6 +101,7 @@ const ATSDashboard = ({ analysisData }) => {
                 style={{ width: `${jobMatchAnalysis.matchScore}%` }}
               />
             </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <h4 className="text-sm text-gray-400 mb-2">Skills</h4>
@@ -115,6 +116,29 @@ const ATSDashboard = ({ analysisData }) => {
                   {jobMatchAnalysis.matchedKeywords?.map(k => <Badge key={k} type="match">{k}</Badge>)}
                   {jobMatchAnalysis.missingKeywords?.map(k => <Badge key={k} type="miss">{k}</Badge>)}
                 </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-white/10">
+              <div>
+                <h4 className="text-sm text-green-400 mb-2 font-medium">Strengths</h4>
+                <ul className="text-sm text-gray-300 space-y-1">
+                  {jobMatchAnalysis.strengths?.map((s, i) => <li key={i} className="flex gap-2"><span>✅</span> {s}</li>)}
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-sm text-red-400 mb-2 font-medium">Weaknesses</h4>
+                <ul className="text-sm text-gray-300 space-y-1">
+                  {jobMatchAnalysis.weaknesses?.map((w, i) => <li key={i} className="flex gap-2"><span>⚠️</span> {w}</li>)}
+                </ul>
+              </div>
+            </div>
+
+            <div className="bg-purple-900/20 border border-purple-500/30 p-4 rounded-xl flex gap-3">
+              <span className="text-xl">💡</span>
+              <div>
+                <h4 className="text-sm text-purple-200 font-medium mb-1">Recommendation</h4>
+                <p className="text-sm text-purple-100/80">{jobMatchAnalysis.recommendation}</p>
               </div>
             </div>
           </div>

@@ -1,9 +1,10 @@
 /**
- * Calculates a deterministic job match score based on keyword overlap.
+ * Calculates a deterministic job match score based on keyword overlap,
+ * and provides actionable insights.
  * 
  * @param {string} resumeText - The extracted text from the resume.
  * @param {string} jobDescription - The target job description.
- * @returns {object} Match result details.
+ * @returns {object} Match result details with insights.
  */
 
 const ROLE_SKILLS = {
@@ -94,7 +95,10 @@ function calculateJobMatch(resumeText, jobDescription) {
       matchedSkills: [],
       missingSkills: [],
       matchedKeywords: [],
-      missingKeywords: []
+      missingKeywords: [],
+      strengths: [],
+      weaknesses: [],
+      recommendation: "Please provide a job description to get a tailored analysis."
     };
   }
 
@@ -127,12 +131,33 @@ function calculateJobMatch(resumeText, jobDescription) {
           (matchedSkills.length / requiredSkills.length) * 100
         );
 
+  // Generate Insights
+  const strengths = matchedSkills.length > 0 
+    ? [`Strong technical foundation with skills in: ${matchedSkills.slice(0, 3).join(', ')}`]
+    : ["Resume contains relevant general terminology."];
+    
+  const weaknesses = missingSkills.length > 0
+    ? missingSkills.slice(0, 3).map(skill => `Lacks experience in: ${skill}`)
+    : ["Consider highlighting more specific technical projects."];
+
+  let recommendation = "";
+  if (matchScore >= 80) {
+    recommendation = "Excellent fit for this role. You possess the majority of requested skills.";
+  } else if (matchScore >= 50) {
+    recommendation = "Good potential fit. Focus on addressing the missing skills to increase your competitiveness.";
+  } else {
+    recommendation = "Consider tailoring your resume more specifically to the job requirements and highlighting transferable skills.";
+  }
+
   return {
     matchScore,
     matchedSkills,
     missingSkills,
     matchedKeywords: matchedSkills,
-    missingKeywords: missingSkills
+    missingKeywords: missingSkills,
+    strengths,
+    weaknesses,
+    recommendation
   };
 }
 
