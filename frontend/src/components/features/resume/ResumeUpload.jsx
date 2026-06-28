@@ -1,9 +1,12 @@
 import React, { useState, useRef } from 'react';
 import api from '../../../services/api';
 import ATSDashboard from '../analysis/ATSDashboard';
+import EnhancedResumePreview from './EnhancedResumePreview';
 import ResumePreview from './ResumePreview';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
+import { saveAs } from "file-saver";
 
 const ResumeUpload = ({ jobDescription }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -83,7 +86,6 @@ const ResumeUpload = ({ jobDescription }) => {
     }
   };
 
-
   const handleDownload = () => {
     if (!uploadResult || !uploadResult.atsAnalysis) return;
 
@@ -99,22 +101,10 @@ const ResumeUpload = ({ jobDescription }) => {
         // Header
         doc.setFillColor(0, 51, 102);
         const pageHeight = doc.internal.pageSize.height;
-
-doc.rect(0, 0, pageWidth, 22, "F");
-
-doc.setTextColor(255);
-doc.setFontSize(18);
-doc.text("AI Resume Analyzer Report", 18, 14);
-
-doc.setTextColor(120);
-doc.setFontSize(10);
-
-doc.text(
-  `Generated using AI Resume Analyzer | Page ${i} of ${pageCount}`,
-  18,
-  pageHeight - 10
-);
-        
+        doc.rect(0, 0, pageWidth, 22, "F");
+        doc.setTextColor(255);
+        doc.setFontSize(18);
+        doc.text("AI Resume Analyzer Report", 18, 14);
         // Footer
         doc.setTextColor(100, 100, 100);
         doc.setFontSize(10);
@@ -127,69 +117,28 @@ doc.text(
     doc.setFillColor(...getScoreColor(atsScore));
     doc.roundedRect(18, 30, 80, 18, 3, 3, "F");
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(14);
     doc.setFontSize(16);
     doc.text(`ATS Score: ${atsScore}%`, 25, 42);
 
-    // Helper for Tables
     const createTable = (title, items) => {
-  autoTable(doc, {
-    head: [[title]],
-    body: items.map((item) => [`• ${item}`]),
-
-    startY: doc.lastAutoTable
-      ? doc.lastAutoTable.finalY + 15
-      : 55,
-
-    theme: "grid",
-
-    margin: {
-      top: 25,
-      bottom: 20,
-      left: 18,
-      right: 18,
-    },
-
-    styles: {
-      fontSize: 10,
-      overflow: "linebreak",
-      cellPadding: 4,
-    },
-
-    headStyles: {
-      fillColor: [0, 51, 102],
-      textColor: 255,
-      fontSize: 12,
-    },
-
-    pageBreak: "auto",
-
-    didDrawPage: function () {
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-
-      // Header
-      doc.setFillColor(0, 51, 102);
-      doc.rect(0, 0, pageWidth, 20, "F");
-
-      doc.setTextColor(255);
-      doc.setFontSize(18);
-      doc.text("AI Resume Analyzer Report", 18, 13);
-
-      // Footer
-      doc.setTextColor(120);
-      doc.setFontSize(10);
-
-      const pageNumber = doc.internal.getCurrentPageInfo().pageNumber;
-
-      doc.text(
-        `Generated using AI Resume Analyzer | Page ${pageNumber}`,
-        18,
-        pageHeight - 10
-      );
-    },
-  });
-};
+      autoTable(doc, {
+        head: [[title]],
+        body: items.map((item) => [`• ${item}`]),
+        startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : 55,
+        theme: "grid",
+        margin: { top: 25, bottom: 20, left: 18, right: 18 },
+        styles: { fontSize: 10, overflow: "linebreak", cellPadding: 4 },
+        headStyles: { fillColor: [0, 51, 102], textColor: 255, fontSize: 12 },
+        pageBreak: "auto",
+        didDrawPage: function () {
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const pageNumber = doc.internal.getCurrentPageInfo().pageNumber;
+            doc.setTextColor(100, 100, 100);
+            doc.setFontSize(10);
+            doc.text(`Generated using AI Resume Analyzer | Page ${pageNumber}`, 18, pageHeight - 10);
+        }
+      });
+    };
 
     createTable('Missing Skills', missingSkills);
     createTable('Missing Keywords', missingKeywords);
@@ -199,7 +148,251 @@ doc.text(
     doc.save('resume-report.pdf');
   };
 
-  // ... (rest of the component) ...
+  const handleDownloadRewrittenPdf = () => {
+    if (!uploadResult?.rewrittenResume) return;
+    const { name, professionalSummary, skills, experience, projects, education, certifications, languages } = uploadResult.rewrittenResume;
+    
+    const doc = new jsPDF();
+    doc.setFontSize(20);
+    doc.text(name, 10, 20);
+    doc.setFontSize(12);
+    
+    let y = 30;
+    const addSection = (title, items) => {
+        doc.setFontSize(14);
+        doc.text(title, 10, y);
+        y += 7;
+        doc.setFontSize(12);
+        (Array.isArray(items) ? items : [items]).forEach(item => {
+            const lines = doc.splitTextToSize(item, 180);
+            doc.text(lines, 10, y);
+            y += lines.length * 7;
+        });
+        y += 5;
+    };
+
+    addSection("Professional Summary", professionalSummary);
+    addSection("Skills", skills.join(", "));
+    addSection("Experience", experience);
+    addSection("Projects", projects);
+    addSection("Education", education);
+    addSection("Certifications", certifications);
+    addSection("Languages", languages);
+
+    doc.save('enhanced-resume.pdf');
+  };
+
+  const handleDownloadRewrittenDocx = async () => {
+  if (!uploadResult?.rewrittenResume) return;
+
+  const {
+    name,
+    professionalSummary,
+    skills = [],
+    experience = [],
+    projects = [],
+    education = [],
+    certifications = [],
+    languages = [],
+  } = uploadResult.rewrittenResume;
+
+  const children = [];
+
+  // Name
+  children.push(
+    new Paragraph({
+      text: name || "Resume",
+      heading: HeadingLevel.HEADING_1,
+    })
+  );
+
+  // Summary
+  children.push(
+    new Paragraph({
+      text: "Professional Summary",
+      heading: HeadingLevel.HEADING_2,
+    })
+  );
+
+  children.push(
+    new Paragraph({
+      text: professionalSummary || "",
+    })
+  );
+
+  // Skills
+  if (skills.length) {
+    children.push(
+      new Paragraph({
+        text: "Skills",
+        heading: HeadingLevel.HEADING_2,
+      })
+    );
+
+    children.push(
+      new Paragraph({
+        text: skills.join(", "),
+      })
+    );
+  }
+
+  // Experience
+  if (experience.length) {
+    children.push(
+      new Paragraph({
+        text: "Experience",
+        heading: HeadingLevel.HEADING_2,
+      })
+    );
+
+    experience.forEach((exp) => {
+      if (typeof exp === "string") {
+        children.push(
+          new Paragraph({
+            text: exp,
+            bullet: { level: 0 },
+          })
+        );
+      } else {
+        children.push(
+          new Paragraph({
+            text: `${exp.title || ""} - ${exp.company || ""}`,
+            bullet: { level: 0 },
+          })
+        );
+
+        if (exp.dates) {
+          children.push(
+            new Paragraph({
+              text: exp.dates,
+            })
+          );
+        }
+
+        if (exp.description) {
+          children.push(
+            new Paragraph({
+              text: exp.description,
+            })
+          );
+        }
+      }
+    });
+  }
+
+  // Projects
+  if (projects.length) {
+    children.push(
+      new Paragraph({
+        text: "Projects",
+        heading: HeadingLevel.HEADING_2,
+      })
+    );
+
+    projects.forEach((project) => {
+      if (typeof project === "string") {
+        children.push(
+          new Paragraph({
+            text: project,
+            bullet: { level: 0 },
+          })
+        );
+      } else {
+        children.push(
+          new Paragraph({
+            text: project.title || "",
+            bullet: { level: 0 },
+          })
+        );
+
+        if (project.description) {
+          children.push(
+            new Paragraph({
+              text: project.description,
+            })
+          );
+        }
+      }
+    });
+  }
+
+  // Education
+  if (education.length) {
+    children.push(
+      new Paragraph({
+        text: "Education",
+        heading: HeadingLevel.HEADING_2,
+      })
+    );
+
+    education.forEach((edu) => {
+      if (typeof edu === "string") {
+        children.push(
+          new Paragraph({
+            text: edu,
+          })
+        );
+      } else {
+        children.push(
+          new Paragraph({
+            text: `${edu.degree || ""} - ${edu.institution || ""}`,
+          })
+        );
+      }
+    });
+  }
+
+  // Certifications
+  if (certifications.length) {
+    children.push(
+      new Paragraph({
+        text: "Certifications",
+        heading: HeadingLevel.HEADING_2,
+      })
+    );
+
+    certifications.forEach((cert) => {
+      children.push(
+        new Paragraph({
+          text: cert,
+          bullet: { level: 0 },
+        })
+      );
+    });
+  }
+
+  // Languages
+  if (languages.length) {
+    children.push(
+      new Paragraph({
+        text: "Languages",
+        heading: HeadingLevel.HEADING_2,
+      })
+    );
+
+    languages.forEach((lang) => {
+      children.push(
+        new Paragraph({
+          text: lang,
+          bullet: { level: 0 },
+        })
+      );
+    });
+  }
+
+  const doc = new Document({
+    sections: [
+      {
+        children,
+      },
+    ],
+  });
+
+  // Browser-compatible
+  const blob = await Packer.toBlob(doc);
+
+  saveAs(blob, "enhanced-resume.docx");
+};
 
   return (
     <div className="w-full">
@@ -273,6 +466,27 @@ doc.text(
     optimizer: uploadResult.optimizer,
   }}
 />
+          {uploadResult.rewrittenResume && (
+            <div className="space-y-6">
+                <EnhancedResumePreview rewrittenResume={uploadResult.rewrittenResume} />
+                <div className="flex justify-center gap-4">
+                    <button
+                        onClick={handleDownloadRewrittenPdf}
+                        disabled={!uploadResult.rewrittenResume}
+                        className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50"
+                    >
+                        Download Enhanced Resume (PDF)
+                    </button>
+                    <button
+                        onClick={handleDownloadRewrittenDocx}
+                        disabled={!uploadResult.rewrittenResume}
+                        className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    >
+                        Download Enhanced Resume (DOCX)
+                    </button>
+                </div>
+            </div>
+          )}
           <div className="flex justify-center mt-6">
             <button
               onClick={handleDownload}

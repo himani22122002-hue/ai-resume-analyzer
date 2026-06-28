@@ -6,6 +6,7 @@ const { saveHistoryItem } = require("../services/history.service");
 const { calculateATSScore } = require("../services/scoring.service");
 const { calculateJobMatch } = require("../services/jobMatch.service");
 const { optimizeResume } = require("../services/resumeOptimizer.service");
+const { rewriteResume } = require("../services/resumeRewriter.service");
 
 const uploadResume = async (req, res) => {
   try {
@@ -31,6 +32,9 @@ const uploadResume = async (req, res) => {
     // Call the Resume Optimizer
     const optimizer = await optimizeResume(data.text, jobDescription);
 
+    // Call the Resume Rewriter
+    const rewrittenResume = await rewriteResume(data.text, jobDescription);
+
     // Save analysis history
     await saveHistoryItem(
       req.file.originalname,
@@ -43,6 +47,7 @@ const uploadResume = async (req, res) => {
       atsAnalysis: analysis,
       jobMatchAnalysis,
       optimizer,
+      rewrittenResume,
     });
 
   } catch (error) {
