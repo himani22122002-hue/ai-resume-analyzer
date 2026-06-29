@@ -60,6 +60,23 @@ const Badge = ({ children, type }) => {
   return <span className={`px-2 py-1 rounded-full text-xs font-medium border ${styles}`}>{children}</span>;
 };
 
+const formatItem = (item, type) => {
+  if (typeof item === 'string') return item;
+  if (typeof item === 'object' && item !== null) {
+    switch (type) {
+      case 'skill':
+        return `${item.category || ''}: ${Array.isArray(item.items) ? item.items.join(', ') : (item.items || '')}`;
+      case 'experience':
+        return `${item.title || ''} at ${item.company || ''} (${item.dates || ''}) - ${item.description || ''}`;
+      case 'project':
+        return `${item.title || ''}: ${item.description || ''}`;
+      default:
+        return item.name || item.title || JSON.stringify(item);
+    }
+  }
+  return String(item);
+};
+
 const ATSDashboard = ({ analysisData }) => {
   if (!analysisData) return <div className="text-center text-gray-400 p-8">No analysis data available.</div>;
 
@@ -77,12 +94,12 @@ const ATSDashboard = ({ analysisData }) => {
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
           <DashboardCard title="Missing Skills" icon={<span>🛠️</span>}>
             <ul className="text-sm text-gray-400 space-y-2 h-32 overflow-y-auto">
-              {missingSkills?.length > 0 ? missingSkills.map((skill, i) => <li key={i}>• {skill}</li>) : <li>No missing skills identified.</li>}
+              {missingSkills?.length > 0 ? missingSkills.map((skill, i) => <li key={i}>• {formatItem(skill, 'skill')}</li>) : <li>No missing skills identified.</li>}
             </ul>
           </DashboardCard>
           <DashboardCard title="Missing Keywords" icon={<span>🔑</span>}>
             <ul className="text-sm text-gray-400 space-y-2 h-32 overflow-y-auto">
-              {missingKeywords?.length > 0 ? missingKeywords.map((k, i) => <li key={i}>• {k}</li>) : <li>No missing keywords identified.</li>}
+              {missingKeywords?.length > 0 ? missingKeywords.map((k, i) => <li key={i}>• {formatItem(k, 'keyword')}</li>) : <li>No missing keywords identified.</li>}
             </ul>
           </DashboardCard>
         </div>
@@ -106,15 +123,15 @@ const ATSDashboard = ({ analysisData }) => {
               <div>
                 <h4 className="text-sm text-gray-400 mb-2">Skills</h4>
                 <div className="flex flex-wrap gap-2">
-                  {jobMatchAnalysis.matchedSkills?.map(s => <Badge key={s} type="match">{s}</Badge>)}
-                  {jobMatchAnalysis.missingSkills?.map(s => <Badge key={s} type="miss">{s}</Badge>)}
+                  {jobMatchAnalysis.matchedSkills?.map((s, i) => <Badge key={i} type="match">{formatItem(s, 'skill')}</Badge>)}
+                  {jobMatchAnalysis.missingSkills?.map((s, i) => <Badge key={i} type="miss">{formatItem(s, 'skill')}</Badge>)}
                 </div>
               </div>
               <div>
                 <h4 className="text-sm text-gray-400 mb-2">Keywords</h4>
                 <div className="flex flex-wrap gap-2">
-                  {jobMatchAnalysis.matchedKeywords?.map(k => <Badge key={k} type="match">{k}</Badge>)}
-                  {jobMatchAnalysis.missingKeywords?.map(k => <Badge key={k} type="miss">{k}</Badge>)}
+                  {jobMatchAnalysis.matchedKeywords?.map((k, i) => <Badge key={i} type="match">{formatItem(k, 'keyword')}</Badge>)}
+                  {jobMatchAnalysis.missingKeywords?.map((k, i) => <Badge key={i} type="miss">{formatItem(k, 'keyword')}</Badge>)}
                 </div>
               </div>
             </div>
@@ -123,13 +140,13 @@ const ATSDashboard = ({ analysisData }) => {
               <div>
                 <h4 className="text-sm text-green-400 mb-2 font-medium">Strengths</h4>
                 <ul className="text-sm text-gray-300 space-y-1">
-                  {jobMatchAnalysis.strengths?.map((s, i) => <li key={i} className="flex gap-2"><span>✅</span> {s}</li>)}
+                  {jobMatchAnalysis.strengths?.map((s, i) => <li key={i} className="flex gap-2"><span>✅</span> {formatItem(s, 'text')}</li>)}
                 </ul>
               </div>
               <div>
                 <h4 className="text-sm text-red-400 mb-2 font-medium">Weaknesses</h4>
                 <ul className="text-sm text-gray-300 space-y-1">
-                  {jobMatchAnalysis.weaknesses?.map((w, i) => <li key={i} className="flex gap-2"><span>⚠️</span> {w}</li>)}
+                  {jobMatchAnalysis.weaknesses?.map((w, i) => <li key={i} className="flex gap-2"><span>⚠️</span> {formatItem(w, 'text')}</li>)}
                 </ul>
               </div>
             </div>
@@ -157,7 +174,7 @@ const ATSDashboard = ({ analysisData }) => {
               <div>
                 <h4 className="text-sm text-gray-300 mb-3 font-medium">Improved Skills</h4>
                 <div className="flex flex-wrap gap-2">
-                  {optimizer.improvedSkills?.map((s, i) => <Badge key={i} type="match">{s}</Badge>)}
+                  {optimizer.improvedSkills?.map((s, i) => <Badge key={i} type="match">{formatItem(s, 'skill')}</Badge>)}
                 </div>
               </div>
               <div>
@@ -165,7 +182,7 @@ const ATSDashboard = ({ analysisData }) => {
                 <div className="bg-blue-900/20 border border-blue-500/30 p-4 rounded-xl flex gap-3">
                   <span className="text-xl">💡</span>
                   <ul className="text-sm text-blue-100/80 space-y-2">
-                    {optimizer.overallAdvice?.map((a, i) => <li key={i}>• {a}</li>)}
+                    {optimizer.overallAdvice?.map((a, i) => <li key={i}>• {formatItem(a, 'text')}</li>)}
                   </ul>
                 </div>
               </div>
@@ -174,14 +191,14 @@ const ATSDashboard = ({ analysisData }) => {
             <div>
               <h4 className="text-sm text-gray-300 mb-3 font-medium">Improved Experience</h4>
               <ul className="text-sm text-gray-300 space-y-2 list-disc pl-5">
-                {optimizer.improvedExperience?.map((e, i) => <li key={i}>{e}</li>)}
+                {optimizer.improvedExperience?.map((e, i) => <li key={i}>{formatItem(e, 'experience')}</li>)}
               </ul>
             </div>
 
             <div>
               <h4 className="text-sm text-gray-300 mb-3 font-medium">Improved Projects</h4>
               <ul className="text-sm text-gray-300 space-y-2 list-disc pl-5">
-                {optimizer.improvedProjects?.map((p, i) => <li key={i}>{p}</li>)}
+                {optimizer.improvedProjects?.map((p, i) => <li key={i}>{formatItem(p, 'project')}</li>)}
               </ul>
             </div>
           </div>
@@ -190,7 +207,7 @@ const ATSDashboard = ({ analysisData }) => {
 
       <DashboardCard title="AI Suggestions" icon={<span>💡</span>} gradient="lg:col-span-3">
         <ul className="text-sm text-gray-400 leading-relaxed space-y-3 h-48 overflow-y-auto pr-4">
-          {suggestions?.length > 0 ? suggestions.map((s, i) => <li key={i} className="bg-white/5 p-3 rounded-lg border border-white/5">{s}</li>) : <li>No suggestions available.</li>}
+          {suggestions?.length > 0 ? suggestions.map((s, i) => <li key={i} className="bg-white/5 p-3 rounded-lg border border-white/5">{formatItem(s, 'text')}</li>) : <li>No suggestions available.</li>}
         </ul>
       </DashboardCard>
     </div>

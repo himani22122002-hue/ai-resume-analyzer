@@ -7,7 +7,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Document, Packer, Paragraph, HeadingLevel } from "docx";
 import { saveAs } from "file-saver";
-import { getResumeSections } from '../../../utils/resumeHelper';
+import { getResumeSections, formatItem } from '../../../utils/resumeHelper';
 
 const ResumeUpload = ({ jobDescription }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -117,7 +117,7 @@ const ResumeUpload = ({ jobDescription }) => {
     const createTable = (title, items) => {
       autoTable(doc, {
         head: [[title]],
-        body: items.map((item) => [`• ${item}`]),
+        body: items.map((item) => [`• ${formatItem(item)}`]),
         startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : 55,
         theme: "grid",
         margin: { top: 25, bottom: 20, left: 18, right: 18 },
@@ -186,7 +186,7 @@ const ResumeUpload = ({ jobDescription }) => {
             });
         } else if (section.type === 'skills') {
             section.items.forEach(skillGroup => {
-                addText(`${skillGroup.category}: ${Array.isArray(skillGroup.items) ? skillGroup.items.join(', ') : skillGroup.items}`, 12);
+                addText(formatItem(skillGroup, 'skill'), 12);
             });
         }
         y += 5;
@@ -223,7 +223,7 @@ const ResumeUpload = ({ jobDescription }) => {
             });
         } else if (section.type === 'skills') {
             section.items.forEach(skillGroup => {
-                children.push(new Paragraph({ text: `${skillGroup.category}: ${Array.isArray(skillGroup.items) ? skillGroup.items.join(', ') : skillGroup.items}` }));
+                children.push(new Paragraph({ text: formatItem(skillGroup, 'skill') }));
             });
         }
     });

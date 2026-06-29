@@ -1,8 +1,30 @@
 // Helper functions to structure resume data consistently for Preview, PDF, and DOCX.
 
+export const formatItem = (item, type = 'text') => {
+  if (typeof item === 'string') return item;
+  if (typeof item === 'object' && item !== null) {
+    switch (type) {
+      case 'skill':
+        return `${item.category || ''}: ${Array.isArray(item.items) ? item.items.join(', ') : (item.items || '')}`;
+      case 'experience':
+        return `${item.title || ''} at ${item.company || ''} (${item.dates || ''}) - ${item.description || ''}`;
+      case 'project':
+        return `${item.title || ''}: ${item.description || ''}`;
+      case 'education':
+        return `${item.degree || ''} from ${item.institution || ''} (${item.graduationYear || ''}) - CGPA: ${item.cgpa || ''}`;
+      case 'certification':
+        return `${item.name || ''} issued by ${item.issuer || ''}`;
+      case 'language':
+        return `${item.name || ''} - ${item.proficiency || ''}`;
+      default:
+        return item.name || item.title || JSON.stringify(item);
+    }
+  }
+  return String(item);
+};
+
 export const getResumeSections = (resume) => {
   if (!resume) return [];
-
   const sections = [];
 
   if (resume.professionalSummary) {
@@ -20,10 +42,10 @@ export const getResumeSections = (resume) => {
       title: 'Education',
       type: 'list',
       items: resume.education.map(edu => ({
-        header: `${edu.degree || "N/A"}`,
-        subHeader: `${edu.university || "N/A"}${edu.location ? ` | ${edu.location}` : ""}`,
-        footer: edu.endDate || "N/A",
-        details: edu.details || []
+       header: edu.degree || "N/A",
+subHeader: `${edu.institution || "N/A"}${edu.location ? ` | ${edu.location}` : ""}`,
+footer: edu.graduationYear || "N/A",
+details: edu.cgpa ? [`CGPA: ${edu.cgpa}`] : []
       }))
     });
   }
@@ -36,7 +58,11 @@ export const getResumeSections = (resume) => {
       items: resume.experience.map(exp => ({
         header: `${exp.company || exp.organization || "N/A"} | ${exp.title || "N/A"} | ${exp.dates || "N/A"}`,
         subHeader: exp.location || "",
-        details: Array.isArray(exp.description) ? exp.description : [exp.description]
+        details: exp.description
+  ? (Array.isArray(exp.description)
+      ? exp.description
+      : [exp.description])
+  : []
       }))
     });
   }
@@ -48,7 +74,11 @@ export const getResumeSections = (resume) => {
       type: 'list',
       items: resume.volunteerExperience.map(vol => ({
         header: `${vol.organization || "N/A"} | ${vol.title || "N/A"} | ${vol.dates || "N/A"}`,
-        details: [vol.description]
+        details: vol.description
+  ? (Array.isArray(vol.description)
+      ? vol.description
+      : [vol.description])
+  : []
       }))
     });
   }
@@ -60,7 +90,11 @@ export const getResumeSections = (resume) => {
       type: 'list',
       items: resume.projects.map(proj => ({
         header: proj.title || "Untitled Project",
-        details: Array.isArray(proj.description) ? proj.description : [proj.description]
+        details: proj.description
+  ? (Array.isArray(proj.description)
+      ? proj.description
+      : [proj.description])
+  : []
       }))
     });
   }

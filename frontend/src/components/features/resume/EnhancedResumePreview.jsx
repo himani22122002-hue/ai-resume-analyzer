@@ -1,5 +1,5 @@
 import React from 'react';
-import { getResumeSections } from '../../../utils/resumeHelper';
+import { getResumeSections, formatItem } from '../../../utils/resumeHelper';
 
 const SectionHeader = ({ title }) => (
   <h2 className="text-[20px] font-bold uppercase border-b border-gray-400 mb-2 mt-6">
@@ -32,7 +32,7 @@ const EnhancedResumePreview = ({ rewrittenResume }) => {
                 {item.footer && <p className="text-[15px] text-gray-600">{item.footer}</p>}
                 {item.details && item.details.length > 0 && (
                   <ul className="list-disc ml-5 mt-1">
-                    {item.details.map((detail, i) => <li key={i}>{detail}</li>)}
+                    {item.details.map((detail, i) => <li key={i}>{formatItem(detail)}</li>)}
                   </ul>
                 )}
               </div>
@@ -44,7 +44,7 @@ const EnhancedResumePreview = ({ rewrittenResume }) => {
               {section.items.map((skillGroup, index) => (
                 <p key={index}>
                   <span className="font-bold">{skillGroup.category || "General"}:</span>{" "}
-                  {Array.isArray(skillGroup.items) ? skillGroup.items.join(', ') : (skillGroup.items || "")}
+                  {formatItem(skillGroup, 'skill').split(': ')[1]}
                 </p>
               ))}
             </div>

@@ -1,12 +1,10 @@
 const fs = require("fs");
 const pdfParse = require("pdf-parse");
 
-const { analyzeResume } = require("../services/gemini.service");
+const { generateCompleteAnalysis } = require("../services/resumeAI.service");
 const { saveHistoryItem } = require("../services/history.service");
 const { calculateATSScore } = require("../services/scoring.service");
 const { calculateJobMatch } = require("../services/jobMatch.service");
-const { optimizeResume } = require("../services/resumeOptimizer.service");
-const { rewriteResume } = require("../services/resumeRewriter.service");
 
 const uploadResume = async (req, res) => {
   try {
@@ -16,12 +14,15 @@ const uploadResume = async (req, res) => {
 
     const data = await pdfParse(pdfBuffer);
 
-    // Gemini analysis (suggestions, missing skills, keywords)
-    const analysis = await analyzeResume(data.text, jobDescription);
+    // Single Gemini API call for Analysis, Optimization, and Rewriting
+    const aiResult = await generateCompleteAnalysis(
+      data.text,
+      jobDescription
+    );
 
-    // Deterministic ATS Score
+    // Deterministic ATS Score (consistent with previous approach)
     const customScore = calculateATSScore(data.text);
-    analysis.atsScore = customScore.atsScore;
+    aiResult.atsAnalysis.atsScore = customScore.atsScore;
 
     // Deterministic Job Match
     const jobMatchAnalysis = calculateJobMatch(
@@ -29,25 +30,17 @@ const uploadResume = async (req, res) => {
       jobDescription
     );
 
-    // Call the Resume Optimizer
-    const optimizer = await optimizeResume(data.text, jobDescription);
-
-    // Call the Resume Rewriter
-    const rewrittenResume = await rewriteResume(data.text, jobDescription);
-
     // Save analysis history
     await saveHistoryItem(
       req.file.originalname,
-      analysis.atsScore
+      aiResult.atsAnalysis.atsScore
     );
 
     // Send everything to frontend
     res.json({
       extractedText: data.text,
-      atsAnalysis: analysis,
+      ...aiResult,
       jobMatchAnalysis,
-      optimizer,
-      rewrittenResume,
     });
 
   } catch (error) {
