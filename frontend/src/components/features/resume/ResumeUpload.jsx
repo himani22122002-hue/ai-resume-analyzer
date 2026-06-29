@@ -5,8 +5,9 @@ import EnhancedResumePreview from './EnhancedResumePreview';
 import ResumePreview from './ResumePreview';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
+import { Document, Packer, Paragraph, HeadingLevel } from "docx";
 import { saveAs } from "file-saver";
+import { getResumeSections } from '../../../utils/resumeHelper';
 
 const ResumeUpload = ({ jobDescription }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -70,14 +71,8 @@ const ResumeUpload = ({ jobDescription }) => {
       setUploadResult(response.data);
       setLoading(false);
       
-      // Save to history
-      try {
-        await saveHistory(selectedFile.name, response.data.atsAnalysis.atsScore);
-        if (window.refreshResumeHistory) {
-          window.refreshResumeHistory();
-        }
-      } catch (historyErr) {
-        console.error("Failed to save to history:", historyErr);
+      if (window.refreshResumeHistory) {
+        window.refreshResumeHistory();
       }
     } catch (err) {
       clearInterval(interval);
@@ -100,7 +95,6 @@ const ResumeUpload = ({ jobDescription }) => {
         doc.setPage(i);
         // Header
         doc.setFillColor(0, 51, 102);
-        const pageHeight = doc.internal.pageSize.height;
         doc.rect(0, 0, pageWidth, 22, "F");
         doc.setTextColor(255);
         doc.setFontSize(18);
@@ -140,9 +134,9 @@ const ResumeUpload = ({ jobDescription }) => {
       });
     };
 
-    createTable('Missing Skills', missingSkills);
-    createTable('Missing Keywords', missingKeywords);
-    createTable('AI Suggestions', suggestions);
+    createTable('Missing Skills', missingSkills || []);
+    createTable('Missing Keywords', missingKeywords || []);
+    createTable('AI Suggestions', suggestions || []);
 
     addHeaderFooter();
     doc.save('resume-report.pdf');
@@ -150,249 +144,94 @@ const ResumeUpload = ({ jobDescription }) => {
 
   const handleDownloadRewrittenPdf = () => {
     if (!uploadResult?.rewrittenResume) return;
-    const { name, professionalSummary, skills, experience, projects, education, certifications, languages } = uploadResult.rewrittenResume;
+    const sections = getResumeSections(uploadResult.rewrittenResume);
     
     const doc = new jsPDF();
-    doc.setFontSize(20);
-    doc.text(name, 10, 20);
-    doc.setFontSize(12);
-    
-    let y = 30;
-    const addSection = (title, items) => {
-        doc.setFontSize(14);
-        doc.text(title, 10, y);
-        y += 7;
-        doc.setFontSize(12);
-        (Array.isArray(items) ? items : [items]).forEach(item => {
-            const lines = doc.splitTextToSize(item, 180);
-            doc.text(lines, 10, y);
-            y += lines.length * 7;
-        });
-        y += 5;
+    const margin = 15;
+    let y = margin;
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
+    doc.text(uploadResult.rewrittenResume.name || "Resume", margin, y);
+    y += 15;
+
+    const addText = (text, fontSize = 12, isBold = false) => {
+        doc.setFontSize(fontSize);
+        doc.setFont("helvetica", isBold ? "bold" : "normal");
+        const lines = doc.splitTextToSize(text, 180);
+        if (y + (lines.length * 7) > pageHeight - margin) {
+            doc.addPage();
+            y = margin;
+        }
+        doc.text(lines, margin, y);
+        y += (lines.length * 7) + 2;
     };
 
-    addSection("Professional Summary", professionalSummary);
-    addSection("Skills", skills.join(", "));
-    addSection("Experience", experience);
-    addSection("Projects", projects);
-    addSection("Education", education);
-    addSection("Certifications", certifications);
-    addSection("Languages", languages);
+    sections.forEach(section => {
+        y += 5;
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text(section.title, margin, y);
+        y += 8;
+        
+        if (section.type === 'text') {
+            addText(section.content, 12);
+        } else if (section.type === 'list') {
+            section.items.forEach(item => {
+                addText(`• ${item.header}`, 12, true);
+                if (item.subHeader) addText(item.subHeader, 10);
+                if (item.footer) addText(item.footer, 10);
+                item.details?.forEach(detail => addText(` - ${detail}`, 12));
+            });
+        } else if (section.type === 'skills') {
+            section.items.forEach(skillGroup => {
+                addText(`${skillGroup.category}: ${Array.isArray(skillGroup.items) ? skillGroup.items.join(', ') : skillGroup.items}`, 12);
+            });
+        }
+        y += 5;
+    });
 
     doc.save('enhanced-resume.pdf');
   };
 
   const handleDownloadRewrittenDocx = async () => {
-  if (!uploadResult?.rewrittenResume) return;
+    if (!uploadResult?.rewrittenResume) return;
+    const sections = getResumeSections(uploadResult.rewrittenResume);
 
-  const {
-    name,
-    professionalSummary,
-    skills = [],
-    experience = [],
-    projects = [],
-    education = [],
-    certifications = [],
-    languages = [],
-  } = uploadResult.rewrittenResume;
-
-  const children = [];
-
-  // Name
-  children.push(
-    new Paragraph({
-      text: name || "Resume",
-      heading: HeadingLevel.HEADING_1,
-    })
-  );
-
-  // Summary
-  children.push(
-    new Paragraph({
-      text: "Professional Summary",
-      heading: HeadingLevel.HEADING_2,
-    })
-  );
-
-  children.push(
-    new Paragraph({
-      text: professionalSummary || "",
-    })
-  );
-
-  // Skills
-  if (skills.length) {
-    children.push(
+    const children = [
       new Paragraph({
-        text: "Skills",
-        heading: HeadingLevel.HEADING_2,
+        text: uploadResult.rewrittenResume.name || "Resume",
+        heading: HeadingLevel.HEADING_1,
       })
-    );
+    ];
 
-    children.push(
-      new Paragraph({
-        text: skills.join(", "),
-      })
-    );
-  }
+    sections.forEach(section => {
+        children.push(new Paragraph({
+            text: section.title,
+            heading: HeadingLevel.HEADING_2,
+        }));
 
-  // Experience
-  if (experience.length) {
-    children.push(
-      new Paragraph({
-        text: "Experience",
-        heading: HeadingLevel.HEADING_2,
-      })
-    );
-
-    experience.forEach((exp) => {
-      if (typeof exp === "string") {
-        children.push(
-          new Paragraph({
-            text: exp,
-            bullet: { level: 0 },
-          })
-        );
-      } else {
-        children.push(
-          new Paragraph({
-            text: `${exp.title || ""} - ${exp.company || ""}`,
-            bullet: { level: 0 },
-          })
-        );
-
-        if (exp.dates) {
-          children.push(
-            new Paragraph({
-              text: exp.dates,
-            })
-          );
+        if (section.type === 'text') {
+            children.push(new Paragraph({ text: section.content }));
+        } else if (section.type === 'list') {
+            section.items.forEach(item => {
+                children.push(new Paragraph({ text: item.header, bullet: { level: 0 } }));
+                if (item.subHeader) children.push(new Paragraph({ text: item.subHeader }));
+                if (item.footer) children.push(new Paragraph({ text: item.footer }));
+                item.details?.forEach(detail => children.push(new Paragraph({ text: ` - ${detail}`, bullet: { level: 1 } })));
+            });
+        } else if (section.type === 'skills') {
+            section.items.forEach(skillGroup => {
+                children.push(new Paragraph({ text: `${skillGroup.category}: ${Array.isArray(skillGroup.items) ? skillGroup.items.join(', ') : skillGroup.items}` }));
+            });
         }
-
-        if (exp.description) {
-          children.push(
-            new Paragraph({
-              text: exp.description,
-            })
-          );
-        }
-      }
     });
-  }
 
-  // Projects
-  if (projects.length) {
-    children.push(
-      new Paragraph({
-        text: "Projects",
-        heading: HeadingLevel.HEADING_2,
-      })
-    );
-
-    projects.forEach((project) => {
-      if (typeof project === "string") {
-        children.push(
-          new Paragraph({
-            text: project,
-            bullet: { level: 0 },
-          })
-        );
-      } else {
-        children.push(
-          new Paragraph({
-            text: project.title || "",
-            bullet: { level: 0 },
-          })
-        );
-
-        if (project.description) {
-          children.push(
-            new Paragraph({
-              text: project.description,
-            })
-          );
-        }
-      }
-    });
-  }
-
-  // Education
-  if (education.length) {
-    children.push(
-      new Paragraph({
-        text: "Education",
-        heading: HeadingLevel.HEADING_2,
-      })
-    );
-
-    education.forEach((edu) => {
-      if (typeof edu === "string") {
-        children.push(
-          new Paragraph({
-            text: edu,
-          })
-        );
-      } else {
-        children.push(
-          new Paragraph({
-            text: `${edu.degree || ""} - ${edu.institution || ""}`,
-          })
-        );
-      }
-    });
-  }
-
-  // Certifications
-  if (certifications.length) {
-    children.push(
-      new Paragraph({
-        text: "Certifications",
-        heading: HeadingLevel.HEADING_2,
-      })
-    );
-
-    certifications.forEach((cert) => {
-      children.push(
-        new Paragraph({
-          text: cert,
-          bullet: { level: 0 },
-        })
-      );
-    });
-  }
-
-  // Languages
-  if (languages.length) {
-    children.push(
-      new Paragraph({
-        text: "Languages",
-        heading: HeadingLevel.HEADING_2,
-      })
-    );
-
-    languages.forEach((lang) => {
-      children.push(
-        new Paragraph({
-          text: lang,
-          bullet: { level: 0 },
-        })
-      );
-    });
-  }
-
-  const doc = new Document({
-    sections: [
-      {
-        children,
-      },
-    ],
-  });
-
-  // Browser-compatible
-  const blob = await Packer.toBlob(doc);
-
-  saveAs(blob, "enhanced-resume.docx");
-};
+    const doc = new Document({ sections: [{ children }] });
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, "enhanced-resume.docx");
+  };
 
   return (
     <div className="w-full">

@@ -77,12 +77,12 @@ const ATSDashboard = ({ analysisData }) => {
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
           <DashboardCard title="Missing Skills" icon={<span>🛠️</span>}>
             <ul className="text-sm text-gray-400 space-y-2 h-32 overflow-y-auto">
-              {missingSkills?.map((skill, i) => <li key={i}>• {skill}</li>) || <li>No missing skills identified.</li>}
+              {missingSkills?.length > 0 ? missingSkills.map((skill, i) => <li key={i}>• {skill}</li>) : <li>No missing skills identified.</li>}
             </ul>
           </DashboardCard>
           <DashboardCard title="Missing Keywords" icon={<span>🔑</span>}>
             <ul className="text-sm text-gray-400 space-y-2 h-32 overflow-y-auto">
-              {missingKeywords?.map((k, i) => <li key={i}>• {k}</li>) || <li>No missing keywords identified.</li>}
+              {missingKeywords?.length > 0 ? missingKeywords.map((k, i) => <li key={i}>• {k}</li>) : <li>No missing keywords identified.</li>}
             </ul>
           </DashboardCard>
         </div>
@@ -190,7 +190,7 @@ const ATSDashboard = ({ analysisData }) => {
 
       <DashboardCard title="AI Suggestions" icon={<span>💡</span>} gradient="lg:col-span-3">
         <ul className="text-sm text-gray-400 leading-relaxed space-y-3 h-48 overflow-y-auto pr-4">
-          {suggestions?.map((s, i) => <li key={i} className="bg-white/5 p-3 rounded-lg border border-white/5">{s}</li>) || <li>No suggestions available.</li>}
+          {suggestions?.length > 0 ? suggestions.map((s, i) => <li key={i} className="bg-white/5 p-3 rounded-lg border border-white/5">{s}</li>) : <li>No suggestions available.</li>}
         </ul>
       </DashboardCard>
     </div>

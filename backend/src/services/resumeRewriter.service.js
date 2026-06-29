@@ -17,45 +17,56 @@ async function rewriteResume(resumeText, jobDescription) {
   }
 
   const prompt = `
-You are an expert professional resume writer and ATS optimization specialist.
-Your task is to rewrite the provided resume text into a professional, polished, and ATS-friendly format.
+You are an expert ATS resume writer. Rewrite the resume professionally while preserving ALL factual information.
 
 ${jobDescription && jobDescription.trim() !== "" ? `
-The candidate is applying for the following role:
+Target Job Description:
 ---
 ${jobDescription}
 ---
-Tailor the rewritten resume to align with the keywords, skills, and requirements mentioned in this job description.
-` : `
-Rewrite the resume to adhere to modern professional standards, using high-impact action verbs and clear structuring.
-`}
+Tailor the resume to align with the job description while strictly adhering to factual accuracy.
+` : ''}
 
-RULES:
-1. Improve grammar, phrasing, and formatting.
-2. Use powerful, results-oriented action verbs (e.g., 'Spearheaded', 'Optimized', 'Engineered').
-3. Quantify achievements (add metrics/numbers where possible, but do not invent fake information).
-4. Strictly preserve the original factual information (do not change job titles, dates, companies, or skills if they exist).
-5. Do not invent fake experience or projects.
-6. Return ONLY a valid JSON object following the schema provided below.
+STRICT RULES:
+1. NEVER invent information.
+2. NEVER create fake work experience, internships, projects, certifications, or skills.
+3. NEVER change dates, CGPA, university names, company names, project names, technologies, or achievements.
+4. Improve grammar, wording, ATS keywords, formatting, and readability only.
+
+SECTION RULES:
+- Professional Summary: Write a concise, ATS-friendly summary.
+- Skills: Keep only existing skills, organized into logical categories.
+- Experience: Include ONLY if the resume contains real work experience or internships. If none exists, return "experience": []. Never convert projects or volunteer work into work experience.
+- Volunteer Experience: Return as "volunteerExperience": []. If none exists, return an empty array.
+- Projects: Improve wording. Keep technologies unchanged. Never add fake technologies.
+- Education: Preserve exactly.
+- Certifications: Preserve exactly.
+- Languages: Preserve exactly.
+
+FRESHER RULE:
+If the candidate is a fresher:
+- Education must appear before Projects.
+- Do not create an Experience section (return "experience": []).
+- Focus on projects and skills.
 
 Original Resume Text:
 ---
 ${resumeText}
 ---
 
-Schema to follow:
+OUTPUT RULES:
+Return ONLY valid JSON. Always return this exact structure:
 {
-  "name": "Candidate's full name",
-  "professionalSummary": "A concise, impactful professional summary tailored to the target role.",
-  "skills": ["List of relevant skills grouped for readability"],
-  "experience": ["Formatted experience entries with quantified achievements"],
-  "projects": ["Key projects highlighted using the X-Y-Z formula"],
-  "education": ["Education details"],
-  "certifications": ["Certifications"],
-  "languages": ["Languages spoken"]
+  "name": "",
+  "professionalSummary": "",
+  "skills": [],
+  "experience": [],
+  "volunteerExperience": [],
+  "projects": [],
+  "education": [],
+  "certifications": [],
+  "languages": []
 }
-
-Ensure the response contains ONLY the valid JSON object. Do not wrap the JSON in Markdown formatting, and do not include any introductory or concluding text.
 `;
 
   try {

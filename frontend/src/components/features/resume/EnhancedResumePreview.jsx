@@ -1,140 +1,56 @@
 import React from 'react';
+import { getResumeSections } from '../../../utils/resumeHelper';
 
-const Section = ({ title, children }) => {
-  if (!children || (Array.isArray(children) && children.length === 0)) return null;
-  return (
-    <div className="mb-6">
-      <h3 className="text-lg font-semibold text-purple-400 mb-3 border-b border-white/10 pb-1">{title}</h3>
-      {children}
-    </div>
-  );
-};
-
-const Badge = ({ children }) => (
-  <span className="px-3 py-1 rounded-full text-sm font-medium bg-white/10 text-gray-200 border border-white/10">
-    {children}
-  </span>
+const SectionHeader = ({ title }) => (
+  <h2 className="text-[20px] font-bold uppercase border-b border-gray-400 mb-2 mt-6">
+    {title}
+  </h2>
 );
 
 const EnhancedResumePreview = ({ rewrittenResume }) => {
   if (!rewrittenResume) return null;
 
-  const {
-    name,
-    professionalSummary,
-    skills,
-    experience,
-    projects,
-    education,
-    certifications,
-    languages
-  } = rewrittenResume;
+  const sections = getResumeSections(rewrittenResume);
 
   return (
-    <div className="p-6 md:p-8 rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl text-gray-100 max-w-4xl mx-auto">
-      {/* Header */}
-      <header className="mb-8 border-b border-white/10 pb-6">
-        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{name}</h1>
+    <div className="max-w-[850px] mx-auto bg-white text-[#222] p-12 font-sans text-[16px] leading-[1.6]">
+      <header className="text-center mb-6">
+        <h1 className="text-[40px] font-bold">{rewrittenResume.name || "Name Not Provided"}</h1>
       </header>
 
-      {/* Professional Summary */}
-      <Section title="Professional Summary">
-        <p className="text-gray-300 leading-relaxed">{professionalSummary}</p>
-      </Section>
+      {sections.map((section) => (
+        <React.Fragment key={section.id}>
+          <SectionHeader title={section.title} />
+          
+          {section.type === 'text' && <p>{section.content}</p>}
+          
+          {section.type === 'list' && (
+            section.items.map((item, index) => (
+              <div key={index} className="mb-4">
+                <p className="font-bold">{item.header}</p>
+                {item.subHeader && <p className="text-[15px] text-gray-600">{item.subHeader}</p>}
+                {item.footer && <p className="text-[15px] text-gray-600">{item.footer}</p>}
+                {item.details && item.details.length > 0 && (
+                  <ul className="list-disc ml-5 mt-1">
+                    {item.details.map((detail, i) => <li key={i}>{detail}</li>)}
+                  </ul>
+                )}
+              </div>
+            ))
+          )}
 
-      {/* Skills */}
-      <Section title="Skills">
-        <div className="flex flex-wrap gap-2">
-          {skills?.map((skill, index) => <Badge key={index}>{skill}</Badge>)}
-        </div>
-      </Section>
-
-      {/* Experience */}
-<Section title="Experience">
-  <div className="space-y-4">
-    {experience?.map((exp, index) => (
-      <div
-        key={index}
-        className="pl-4 border-l-2 border-purple-500/50"
-      >
-        <h4 className="font-semibold text-white">
-          {exp.title}
-        </h4>
-
-        <p className="text-purple-300 text-sm">
-          {exp.company} • {exp.location}
-        </p>
-
-        <p className="text-gray-500 text-sm">
-          {exp.dates}
-        </p>
-
-        <p className="text-gray-300 mt-2">
-          {exp.description}
-        </p>
-      </div>
-    ))}
-  </div>
-</Section>
-      
-      {/* Projects */}
-<Section title="Projects">
-  <div className="space-y-4">
-    {projects?.map((project, index) => (
-      <div
-        key={index}
-        className="pl-4 border-l-2 border-blue-500/50"
-      >
-        <h4 className="font-semibold text-white">
-          {project.title}
-        </h4>
-
-        <p className="text-gray-300 mt-2">
-          {project.description}
-        </p>
-      </div>
-    ))}
-  </div>
-</Section>
-
-      {/* Education */}
-      <Section title="Education">
-  <div className="space-y-4">
-    {education?.map((edu, index) => (
-      <div key={index}>
-        <h4 className="font-semibold text-white">
-          {edu.degree}
-        </h4>
-
-        <p className="text-purple-300">
-          {edu.institution}
-        </p>
-
-        <p className="text-gray-400">
-          {edu.year}
-        </p>
-      </div>
-    ))}
-  </div>
-</Section>
-
-      {/* Certifications & Languages */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <Section title="Certifications">
-          <ul className="space-y-2">
-            {certifications?.map((cert, index) => (
-              <li key={index} className="text-gray-300">• {cert}</li>
-            ))}
-          </ul>
-        </Section>
-        <Section title="Languages">
-          <ul className="space-y-2">
-            {languages?.map((lang, index) => (
-              <li key={index} className="text-gray-300">• {lang}</li>
-            ))}
-          </ul>
-        </Section>
-      </div>
+          {section.type === 'skills' && (
+            <div className="space-y-1">
+              {section.items.map((skillGroup, index) => (
+                <p key={index}>
+                  <span className="font-bold">{skillGroup.category || "General"}:</span>{" "}
+                  {Array.isArray(skillGroup.items) ? skillGroup.items.join(', ') : (skillGroup.items || "")}
+                </p>
+              ))}
+            </div>
+          )}
+        </React.Fragment>
+      ))}
     </div>
   );
 };
