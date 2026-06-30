@@ -17,17 +17,18 @@ export const formatItem = (item, type = 'text') => {
       case 'language':
         return `${item.name || ''} - ${item.proficiency || ''}`;
       default:
-        return item.name || item.title || JSON.stringify(item);
+        // Only return properties if they are strings or numbers to avoid object rendering errors
+        return Object.values(item).filter(val => typeof val === 'string' || typeof val === 'number').join(' - ');
     }
   }
-  return String(item);
+  return typeof item === 'string' || typeof item === 'number' ? String(item) : '';
 };
 
 export const getResumeSections = (resume) => {
-  if (!resume) return [];
+  if (!resume || typeof resume !== 'object') return [];
   const sections = [];
 
-  if (resume.professionalSummary) {
+  if (resume.professionalSummary && typeof resume.professionalSummary === 'string' && resume.professionalSummary.trim().length > 0) {
     sections.push({
       id: 'summary',
       title: 'Professional Summary',
@@ -36,98 +37,108 @@ export const getResumeSections = (resume) => {
     });
   }
 
-  if (Array.isArray(resume.education) && resume.education.length > 0) {
-    sections.push({
-      id: 'education',
-      title: 'Education',
-      type: 'list',
-      items: resume.education.map(edu => ({
-       header: edu.degree || "N/A",
-subHeader: `${edu.institution || "N/A"}${edu.location ? ` | ${edu.location}` : ""}`,
-footer: edu.graduationYear || "N/A",
-details: edu.cgpa ? [`CGPA: ${edu.cgpa}`] : []
-      }))
-    });
+  if (Array.isArray(resume.education)) {
+    const validItems = resume.education.map(edu => {
+      const details = [];
+      const date = edu.graduationYear || edu.expectedGraduation || edu.endDate || edu.passingYear;
+      if (date) details.push(`Graduation: ${date}`);
+      if (edu.cgpa) details.push(`CGPA: ${edu.cgpa}`);
+      if (edu.GPA) details.push(`GPA: ${edu.GPA}`);
+      if (edu.percentage) details.push(`Percentage: ${edu.percentage}`);
+      if (edu.score) details.push(`Score: ${edu.score}`);
+      if (edu.grade) details.push(`Grade: ${edu.grade}`);
+
+      return {
+        header: edu.degree,
+        subHeader: [edu.institution, edu.location].filter(Boolean).join(' | '),
+        details: details
+      };
+    }).filter(edu => edu.header || edu.subHeader);
+
+    if (validItems.length > 0) {
+      sections.push({ id: 'education', title: 'Education', type: 'list', items: validItems });
+    }
   }
 
-  if (Array.isArray(resume.experience) && resume.experience.length > 0) {
-    sections.push({
-      id: 'experience',
-      title: 'Experience',
-      type: 'list',
-      items: resume.experience.map(exp => ({
-        header: `${exp.company || exp.organization || "N/A"} | ${exp.title || "N/A"} | ${exp.dates || "N/A"}`,
-        subHeader: exp.location || "",
-        details: exp.description
-  ? (Array.isArray(exp.description)
-      ? exp.description
-      : [exp.description])
-  : []
-      }))
-    });
+  if (Array.isArray(resume.experience)) {
+    const validItems = resume.experience.map(exp => ({
+        header: [exp.company || exp.organization, exp.title, exp.dates].filter(Boolean).join(' | '),
+        subHeader: exp.location,
+        details: Array.isArray(exp.description) ? exp.description : (exp.description ? [exp.description] : [])
+      })).filter(exp => exp.header);
+
+    if (validItems.length > 0) {
+      sections.push({ id: 'experience', title: 'Experience', type: 'list', items: validItems });
+    }
   }
 
-  if (Array.isArray(resume.volunteerExperience) && resume.volunteerExperience.length > 0) {
-    sections.push({
-      id: 'volunteer',
-      title: 'Volunteer Experience',
-      type: 'list',
-      items: resume.volunteerExperience.map(vol => ({
-        header: `${vol.organization || "N/A"} | ${vol.title || "N/A"} | ${vol.dates || "N/A"}`,
-        details: vol.description
-  ? (Array.isArray(vol.description)
-      ? vol.description
-      : [vol.description])
-  : []
-      }))
-    });
+  if (Array.isArray(resume.volunteerExperience)) {
+    const validItems = resume.volunteerExperience.map(vol => ({
+        header: [vol.organization, vol.title, vol.dates].filter(Boolean).join(' | '),
+        details: Array.isArray(vol.description) ? vol.description : (vol.description ? [vol.description] : [])
+      })).filter(vol => vol.header);
+
+    if (validItems.length > 0) {
+      sections.push({ id: 'volunteer', title: 'Volunteer Experience', type: 'list', items: validItems });
+    }
   }
 
-  if (Array.isArray(resume.projects) && resume.projects.length > 0) {
-    sections.push({
-      id: 'projects',
-      title: 'Projects',
-      type: 'list',
-      items: resume.projects.map(proj => ({
-        header: proj.title || "Untitled Project",
-        details: proj.description
-  ? (Array.isArray(proj.description)
-      ? proj.description
-      : [proj.description])
-  : []
-      }))
-    });
+  if (Array.isArray(resume.projects)) {
+    const validItems = resume.projects.map(proj => ({
+        header: proj.title,
+        details: Array.isArray(proj.description) ? proj.description : (proj.description ? [proj.description] : [])
+      })).filter(proj => proj.header);
+
+    if (validItems.length > 0) {
+      sections.push({ id: 'projects', title: 'Projects', type: 'list', items: validItems });
+    }
   }
 
-  if (Array.isArray(resume.skills) && resume.skills.length > 0) {
-    sections.push({
-      id: 'skills',
-      title: 'Skills',
-      type: 'skills',
-      items: resume.skills
-    });
+  if (Array.isArray(resume.skills)) {
+    const validItems = resume.skills.map(skill => {
+        if (typeof skill === 'string' && skill.trim().length > 0) return { category: 'General', items: [skill] };
+        if (typeof skill === 'object' && skill !== null) {
+          const items = Array.isArray(skill.items) ? skill.items.filter(i => i) : (skill.items ? [skill.items] : []);
+          if (items.length > 0) {
+            return {
+              category: skill.category || 'Skills',
+              items: items
+            };
+          }
+        }
+        return null;
+      }).filter(Boolean);
+
+    if (validItems.length > 0) {
+      sections.push({ id: 'skills', title: 'Skills', type: 'skills', items: validItems });
+    }
   }
 
-  if (Array.isArray(resume.certifications) && resume.certifications.length > 0) {
-    sections.push({
-      id: 'certifications',
-      title: 'Certifications',
-      type: 'list',
-      items: resume.certifications.map(cert => ({
-        header: `${cert.name || "N/A"}${cert.issuer ? ` | ${cert.issuer}` : ""}`
-      }))
-    });
+  if (Array.isArray(resume.certifications)) {
+    const validItems = resume.certifications.map(cert => ({
+        header: (typeof cert === 'string') ? cert : ([cert.name, cert.title, cert.issuer].filter(Boolean).join(' | '))
+      })).filter(cert => cert.header);
+
+    if (validItems.length > 0) {
+      sections.push({ id: 'certifications', title: 'Certifications', type: 'list', items: validItems });
+    }
   }
 
-  if (Array.isArray(resume.languages) && resume.languages.length > 0) {
-    sections.push({
-      id: 'languages',
-      title: 'Languages',
-      type: 'list',
-      items: resume.languages.map(lang => ({
-        header: `${lang.name || "N/A"}${lang.proficiency ? ` (${lang.proficiency})` : ""}`
-      }))
-    });
+  if (Array.isArray(resume.languages)) {
+    const validItems = resume.languages.map(lang => {
+      if (typeof lang === 'string') return { header: lang };
+      if (typeof lang === 'object' && lang !== null && (lang.name || lang.proficiency)) {
+        const parts = [];
+        if (lang.name) parts.push(lang.name);
+        if (lang.proficiency) parts.push(`(${lang.proficiency})`);
+        return { header: parts.join(' ') };
+      }
+      return null;
+    }).filter(lang => lang && lang.header);
+
+    if (validItems.length > 0) {
+      sections.push({ id: 'languages', title: 'Languages', type: 'list', items: validItems });
+    }
   }
 
   return sections;
